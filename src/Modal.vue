@@ -87,7 +87,7 @@ export default {
   },
   computed: {
     modalClass() {
-      const classes = this.classes.reduce(function(result, item, index, array) {
+      const classes = this.classes.reduce(function(result, item, index) {
         result[index] = true
         return result
       }, {})
