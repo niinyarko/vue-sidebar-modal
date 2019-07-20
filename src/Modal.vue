@@ -27,7 +27,7 @@
   </div>
 </template>
 <script>
-import { createModalEvent } from "utils";
+import { createModalEvent } from "./utils";
 import Modal from "./index";
 
 export default {
