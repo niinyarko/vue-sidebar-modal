@@ -10,7 +10,7 @@
         v-if="visibility.modal"
         ref="modal"
         :class="modalClass"
-        class="side-modal modal-module__side-modal___3cUif"
+        :style="modalStyle"
       >
         <slot />
       </div>
@@ -27,14 +27,37 @@
   </div>
 </template>
 <script>
-import { createModalEvent } from "./utils";
-import Modal from "./index";
+import { createModalEvent } from './utils'
+import { parseNumber, validateNumber } from './parser'
+import Modal from './index'
 
 export default {
-  name: "SidebarModal",
+  name: 'SidebarModal',
   props: {
     name: {
       type: String
+    },
+    clickToClose: {
+      type: Boolean,
+      default: true
+    },
+    width: {
+      type: [Number, String],
+      default: 600,
+      validator: validateNumber
+    },
+    height: {
+      type: [Number, String],
+      default: '100%',
+      validator(value) {
+        return value === 'auto' || validateNumber(value)
+      }
+    },
+    classes: {
+      type: [Array],
+      default() {
+        return []
+      }
     }
   },
   data() {
@@ -44,75 +67,108 @@ export default {
         modal: false,
         overlay: false
       },
-      clickToClose: {
-        type: Boolean,
-        default: true
-      },
       mutationObserver: null,
       delay: {
         type: Number,
         default: 0
+      },
+      modal: {
+        width: 0,
+        widthType: 'px',
+        height: 0,
+        heightType: '%',
+        renderedHeight: 0
+      },
+      window: {
+        width: 0,
+        height: 0
       }
-    };
+    }
   },
   computed: {
     modalClass() {
+      const classes = this.classes.reduce(function(result, item, index, array) {
+        result[index] = true
+        return result
+      }, {})
       return {
-        "modal-module__is-visible___2wKcA": this.visibility.modal,
-        "is-visible": this.visibility.modal
-      };
+        'modal-module__is-visible___2wKcA': this.visibility.modal,
+        'is-visible': this.visibility.modal,
+        'side-modal': true,
+        'modal-module__side-modal___3cUif': true,
+        ...classes
+      }
+    },
+    modalStyle() {
+      const heightValue = parseNumber(this.height)
+      return {
+        width: this.width + 'px',
+        height: `${heightValue.value}${heightValue.type}`
+      }
     }
   },
   watch: {
     visible(value) {
       if (value) {
-        this.visibility.overlay = true;
+        this.visibility.overlay = true
         setTimeout(() => {
-          this.visibility.modal = true;
+          this.visibility.modal = true
           this.$nextTick(() => {
-            this.callAfterEvent(true);
-          });
-        }, this.delay);
+            this.callAfterEvent(true)
+          })
+        }, this.delay)
       } else {
-        this.visibility.modal = false;
+        this.visibility.modal = false
         setTimeout(() => {
-          this.visibility.overlay = false;
+          this.visibility.overlay = false
           this.$nextTick(() => {
-            this.callAfterEvent(false);
-          });
-        }, this.delay);
+            this.callAfterEvent(false)
+          })
+        }, this.delay)
       }
     }
+  },
+  created() {
+    this.setInitialSize()
   },
   /**
    * Sets global listeners
    */
   beforeMount() {
-    Modal.event.$on("toggle", this.handleToggleEvent);
+    Modal.event.$on('toggle', this.handleToggleEvent)
 
     if (this.clickToClose) {
-      window.addEventListener("keyup", this.handleEscapeKeyUp);
+      window.addEventListener('keyup', this.handleEscapeKeyUp)
     }
   },
   /**
    * Removes global listeners
    */
   beforeDestroy() {
-    Modal.event.$off("toggle", this.handleToggleEvent);
+    Modal.event.$off('toggle', this.handleToggleEvent)
     if (this.clickToClose) {
-      window.removeEventListener("keyup", this.handleEscapeKeyUp);
+      window.removeEventListener('keyup', this.handleEscapeKeyUp)
     }
   },
   methods: {
+    setInitialSize() {
+      const { modal } = this
+      const width = parseNumber(this.width)
+      const height = parseNumber(this.height)
+      modal.width = width.value
+      modal.widthType = width.type
+      modal.height = height.value
+      modal.heightType = height.type
+    },
     handleToggleEvent(name, state, params) {
       if (this.name === name) {
-        const nextState = typeof state === "undefined" ? !this.visible : state;
-        this.toggle(nextState, params);
+        const nextState = typeof state === 'undefined' ? !this.visible : state
+        this.toggle(nextState, params)
       }
     },
     handleEscapeKeyUp(event) {
       if (event.which === 27 && this.visible) {
-        this.$modal.hide(this.name);
+        this.$modal.hide(this.name)
       }
     },
     /**
@@ -124,13 +180,13 @@ export default {
      */
     callAfterEvent(state) {
       if (state) {
-        this.connectObserver();
+        this.connectObserver()
       } else {
-        this.disconnectObserver();
+        this.disconnectObserver()
       }
-      const eventName = state ? "opened" : "closed";
-      const event = this.createModalEvent({ state });
-      this.$emit(eventName, event);
+      const eventName = state ? 'opened' : 'closed'
+      const event = this.createModalEvent({ state })
+      this.$emit(eventName, event)
     },
     /**
      * Generates event object
@@ -140,7 +196,7 @@ export default {
         name: this.name,
         ref: this.$refs.modal,
         ...args
-      });
+      })
     },
     /**
      * Event handler which is triggered on $modal.show and $modal.hide
@@ -148,41 +204,41 @@ export default {
      * but AfterEvents ('opened' and 'closed') are moved to `watch.visible`.
      */
     toggle(nextState, params) {
-      const { visible } = this;
+      const { visible } = this
       if (visible === nextState) {
-        return;
+        return
       }
-      const beforeEventName = visible ? "before-close" : "before-open";
-      if (beforeEventName === "before-open") {
+      const beforeEventName = visible ? 'before-close' : 'before-open'
+      if (beforeEventName === 'before-open') {
         /**
          * Need to unfocus previously focused element, otherwise
          * all keypress events (ESC press, for example) will trigger on that element.
          */
         if (
           document.activeElement &&
-          document.activeElement.tagName !== "BODY" &&
+          document.activeElement.tagName !== 'BODY' &&
           document.activeElement.blur
         ) {
-          document.activeElement.blur();
+          document.activeElement.blur()
         }
-        document.body.classList.add("modal-open");
+        document.body.classList.add('modal-open')
       } else {
-        document.body.classList.remove("modal-open");
+        document.body.classList.remove('modal-open')
       }
 
-      let stopEventExecution = false;
+      let stopEventExecution = false
       const stop = () => {
-        stopEventExecution = true;
-      };
+        stopEventExecution = true
+      }
       const beforeEvent = this.createModalEvent({
         stop,
         state: nextState,
         params
-      });
+      })
 
-      this.$emit(beforeEventName, beforeEvent);
+      this.$emit(beforeEventName, beforeEvent)
       if (!stopEventExecution) {
-        this.visible = nextState;
+        this.visible = nextState
       }
     },
     /**
@@ -190,7 +246,7 @@ export default {
      */
     handleBackgroundClick() {
       if (this.clickToClose) {
-        this.toggle(false);
+        this.toggle(false)
       }
     },
     /**
@@ -203,7 +259,7 @@ export default {
           childList: true,
           attributes: true,
           subtree: true
-        });
+        })
       }
     },
     /**
@@ -211,11 +267,11 @@ export default {
      */
     disconnectObserver() {
       if (this.mutationObserver) {
-        this.mutationObserver.disconnect();
+        this.mutationObserver.disconnect()
       }
     },
     beforeTransitionEnter() {
-      this.connectObserver();
+      this.connectObserver()
     },
     afterTransitionEnter() {
       // console.log('after transition enter')
@@ -224,7 +280,7 @@ export default {
       // console.log('after transition leave')
     }
   }
-};
+}
 </script>
 <style>
 .slide-fade-enter-active {
@@ -264,7 +320,9 @@ export default {
   float: right;
   text-align: right;
 }
-#sidebar-modals-container .sidemodal .modal-actions .btn,
+#sidebar-modals-container .sidemodal .modal-actions .btn {
+  margin-left: 15px;
+}
 #sidebar-modals-container .sidemodal .modal-actions .btn-group {
   margin-left: 15px;
 }
@@ -307,23 +365,16 @@ export default {
 }
 #sidebar-modals-container .side-modal {
   position: fixed;
-  top: 58px;
-  right: -800px;
+  top: 0;
+  right: -720px;
   z-index: 9998;
-  width: 800px;
-  height: 100%;
   padding: 45px 105px 90px;
   overflow: scroll;
   background-color: #fff;
   box-shadow: -2px 0 6px rgba(41, 70, 97, 0.1);
   transition: right 0.5s;
 }
-#sidebar-modals-container .side-modal .alert,
-#sidebar-modals-container .side-modal .input-select-wrap,
-#sidebar-modals-container .side-modal .input-text-wrap,
-#sidebar-modals-container .side-modal fieldset,
-#sidebar-modals-container .side-modal h2,
-#sidebar-modals-container .side-modal p {
+#sidebar-modals-container .side-modal .alert, #sidebar-modals-container .side-modal .input-select-wrap, #sidebar-modals-container .side-modal .input-text-wrap, #sidebar-modals-container .side-modal fieldset, #sidebar-modals-container .side-modal h2, #sidebar-modals-container .side-modal p {
   margin-bottom: 30px;
 }
 #sidebar-modals-container .side-modal fieldset:last-of-type {
@@ -365,8 +416,8 @@ export default {
 }
 #sidebar-modals-container .side-modal {
   right: -100%;
-  padding-left: 45px;
-  padding-right: 45px;
+  padding-left: 90px;
+  padding-right: 90px;
 }
 #sidebar-modals-container .side-modal.wide {
   min-width: 800px;
@@ -376,16 +427,16 @@ export default {
 }
 #sidebar-modals-container .side-modal.is-visible {
   right: 0;
-  z-index: 1001;
 }
-body .sidemodal {
+#sidebar-modals-container .sidemodal {
   overflow: auto;
 }
-body .sidemodal .modal-dialog {
+#sidebar-modals-container .sidemodal .modal-dialog {
   margin-top: 0;
   margin-bottom: 0;
 }
-body .sidemodal .modal-body {
+#sidebar-modals-container .sidemodal .modal-body {
   line-height: 27px;
 }
+
 </style>

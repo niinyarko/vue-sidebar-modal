@@ -17,6 +17,12 @@ import SidebarModal from 'vue-sidebar-modal'
 Vue.use(SidebarModal)
 ```
 
+```scss
+Import css file
+
+@import "~vue-sidebar-modal/dist/vue-sidebar-modal";
+```
+
 Create modal:
 
 ```vue
@@ -110,3 +116,23 @@ this.$sidebarModal.show({
   `
 })
 ```
+
+### Properties
+
+| Name      | Required | Type          | Default     | Description |
+| ---       | ---      | ---           | ---         | ---         |
+| name      | true  | [String, Number] |             | Name of the modal |
+| delay     | false | Number           | 0           | Delay between showing overlay and actual modal box |
+| clickToClose | false | Boolean       | true        | If set to `false`, it will not be possible to close modal by clicking on the background |
+| classes   | false | [Array]  |[]| Classes that will be applied to the actual modal box|
+| width     | false | [String, Number] | 600         | Width in pixels or percents (e.g. 50 or "50px", "50%") |
+| height    | false | [String, Number] | 100%         | Height in pixels or percents (e.g. 50 or "50px", "50%") or `"auto"` |
+
+### Events
+
+| Name         | Description |
+| ---          | --- |
+| before-open  | Emits while modal is still invisible, but was added to the DOM |
+| opened       | Emits after modal became visible or started transition |
+| before-close | Emits before modal is going to be closed. Can be stopped from the event listener calling `event.stop()` (example: you are creating a text editor, and want to stop closing and ask the user to correct mistakes if the text is not valid)
+| closed       | Emits right before modal is destroyed |
