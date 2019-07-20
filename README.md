@@ -2,6 +2,8 @@
 
 ##### Simple to use sidebar modal based on the [Vue JS Modal Plugin](https://github.com/euvl/vue-js-modal)
 
+<img src="https://raw.githubusercontent.com/niinyarko/vue-sidebar-modal/master/src/screenshot.png" width="600"/>
+
 ### Install
 ```bash
 npm install vue-sidebar-modal --save
