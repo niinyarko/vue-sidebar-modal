@@ -1,7 +1,13 @@
 {
   "name": "vue-sidebar-modal",
+  "description": "Simple to use Vue.Js sidebar modal",
   "version": "0.1.0",
-  "private": true,
+  "author": "Laud Bruce-Tagoe <laud@inclusiveinnovations.co>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/niinyarko/vue-sidebar-modal.git"
+  },
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
